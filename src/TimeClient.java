@@ -7,16 +7,20 @@ import java.util.Date;
 
 public class TimeClient 
 { 
-	private Socket socket		 = null; 
+	private Socket socket		 = null;
 	private DataInputStream input = null;
+	private DataOutputStream output = null;
 
 	public TimeClient(String timeHostname) throws IOException {
 		int nistPort = 13;
 		socket = new Socket(timeHostname, nistPort);
+//		socket = new Socket("localhost", 5000);
 		input = new DataInputStream(socket.getInputStream());
 	}
 
 	public Date getTimeFromNistServer() throws IOException {
+		output = new DataOutputStream(socket.getOutputStream());
+		output.write(0);
 		int daytimeSize = 50;
 		int byteChar;
 		StringBuilder data = new StringBuilder();

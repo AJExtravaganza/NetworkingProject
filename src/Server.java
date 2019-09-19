@@ -28,6 +28,7 @@ public class Server
 		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		StringBuilder http = new StringBuilder();
 		String line = in.readLine();
+		System.out.println("Received:");
 		try {
 			while (!line.isEmpty()) {
 				System.out.println(line);
@@ -40,15 +41,19 @@ public class Server
 		return http.toString();
 	}
 
-	private void respondTo(String inData) throws IOException {TimeClient timeGrabber = new TimeClient("time.nist.gov");
-//		String response = timeGrabber.getTimeFromNistServer().toString();
-		String response = new HttpResponse().getExample();
-		send(response);
+	private void respondTo(String inData) throws IOException {
+		HttpResponse response = new HttpResponse();
+		TimeClient timeGrabber = new TimeClient("time.nist.gov");
+		Date time= timeGrabber.getTimeFromNistServer();
+		response.setContent(time.toString());
+		send(response.get());
 	}
 
 	private void send(String outData) throws IOException {
 		DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+		System.out.println("Sending:\n" + outData);
 		out.writeUTF(outData);
+		out.close();
 	}
 
 	

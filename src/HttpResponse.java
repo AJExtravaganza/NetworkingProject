@@ -1,31 +1,41 @@
 public class HttpResponse {
-    String httpVersion = "HTTP/1.1";
+    String version = "HTTP/1.1";
     String statusCode = "200";
     String statusDescription = "OK";
+    String contentType = "text/html";
+    String content = "";
+    int contentLength = 0;
 
     public HttpResponse() {
 
     }
 
+    public void setContent(String content) {
+        this.content = content;
+        this.contentLength = content.length();
+    }
+
     public String get() {
-        StringBuilder strBuild = new StringBuilder();
-        strBuild.append(httpVersion).append("\r\n")
-                .append(statusCode).append("\r\n")
-                .append(statusDescription).append("\r\n");
+        String headers = String.format("%s %s %s\r\n" +
+                "Content-Type: %s\r\n" +
+                "Content-Length: %s\r\n",
+                version, statusCode, statusDescription,
+                contentType,
+                contentLength);
+        String separator = "\r\n";
 
-        strBuild.append("\r\n");
-
-        strBuild.append("message contents");
-        return strBuild.toString();
+        String response = headers + separator + content + '\n';
+        return response;
     }
 
     public String getExample() {
-        return "HTTP/1.1 200 OK\r\n" +
-                "Date: Mon, 27 Jul 2009 12:28:53 GMT\r\n" +
-                "Server: Apache/2.2.14 (Win32)\r\n" +
-                "Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\n" +
-                "Content-Length: 88\r\n" +
+        String output = "<html><head><title>Example</title></head><body><p>Worked!!!</p></body></html>";
+        String headers = String.format("HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/html\r\n" +
-                "Connection: Closed";
+                "Content-Length: %s\r\n", output.length());
+        String separator = "\r\n\r\n";
+
+        String response = headers + separator + output + '\n';
+        return response;
     }
 }
