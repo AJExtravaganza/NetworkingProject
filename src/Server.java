@@ -1,4 +1,4 @@
-import java.net.*; 
+import java.net.*;
 import java.io.*; 
 import java.text.*;
 import java.time.*;
@@ -21,32 +21,62 @@ public class Server
 	}
 
 	private void process() throws IOException {
-		respondTo(receive());
-	}
-
-	private String receive() throws IOException {
-		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		StringBuilder http = new StringBuilder();
-		String line = in.readLine();
-		System.out.println("Received:");
 		try {
-			while (!line.isEmpty()) {
-				System.out.println(line);
-				http.append(line);
-				line = in.readLine();
-			}
-		} catch (NullPointerException err) {
-			System.out.println("End of request reached");
+			respondTo(receive());
+		} catch (URISyntaxException err) {
+			send(new HttpResponse().badRequest());
 		}
-		return http.toString();
 	}
 
-	private void respondTo(String inData) throws IOException {
+	private SimpleHttpRequest receive() throws IOException, URISyntaxException {
+		return new SimpleHttpRequest(socket.getInputStream());
+	}
+
+	private void respondTo(SimpleHttpRequest request) throws IOException {
+		Boolean goodRequest = true;
 		HttpResponse response = new HttpResponse();
 		TimeClient timeGrabber = new TimeClient("time.nist.gov");
 		Date time= timeGrabber.getTimeFromNistServer();
-		response.setContent(time.toString());
-		send(response.get());
+
+		String requestedTimezone;
+		try {
+			requestedTimezone = request.uri.getQuery().split("zone=")[1].split("&")[0]; //don't judge me
+ 		} catch (NullPointerException err) {
+			requestedTimezone = "all";
+		}
+
+		String[] timeOutputLines = new String[3];
+		switch (requestedTimezone.toLowerCase()) {
+			case "all":
+				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
+				timeOutputLines[1] = String.format("GMT Date/Time: %s", time.toString());
+				timeOutputLines[2] = String.format("GMT Date/Time: %s", time.toString());
+				break;
+			case "est":
+				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
+				break;
+			case "pst":
+				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
+				break;
+			default:
+				goodRequest = false;
+		}
+
+		if (goodRequest) {
+			StringBuilder responseBody = new StringBuilder();
+			for (String line : timeOutputLines) {
+				if (line != null) {
+					responseBody.append(line).append("<br>");
+				}
+			}
+
+			String responseContent = String.format("<html><head><title>Current Time</title></head><body><h3>%s</h3></body></html>", responseBody);
+			response.setContent(responseContent);
+			send(response.get());
+		}
+		else {
+			send(new HttpResponse().badRequest());
+		}
 	}
 
 	private void send(String outData) throws IOException {
