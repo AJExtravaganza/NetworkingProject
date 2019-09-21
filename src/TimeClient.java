@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class TimeClient 
 { 
@@ -14,7 +15,6 @@ public class TimeClient
 	public TimeClient(String timeHostname) throws IOException {
 		int nistPort = 13;
 		socket = new Socket(timeHostname, nistPort);
-//		socket = new Socket("localhost", 5000);
 		input = new DataInputStream(socket.getInputStream());
 	}
 

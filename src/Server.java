@@ -36,7 +36,7 @@ public class Server
 		Boolean goodRequest = true;
 		HttpResponse response = new HttpResponse();
 		TimeClient timeGrabber = new TimeClient("time.nist.gov");
-		Date time= timeGrabber.getTimeFromNistServer();
+		Date date= timeGrabber.getTimeFromNistServer();
 
 		String requestedTimezone;
 		try {
@@ -48,15 +48,15 @@ public class Server
 		String[] timeOutputLines = new String[3];
 		switch (requestedTimezone.toLowerCase()) {
 			case "all":
-				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
-				timeOutputLines[1] = String.format("GMT Date/Time: %s", time.toString());
-				timeOutputLines[2] = String.format("GMT Date/Time: %s", time.toString());
+				timeOutputLines[0] = getOutputLine(date, "UTC");
+				timeOutputLines[1] = getOutputLine(date, "EST");
+				timeOutputLines[2] = getOutputLine(date, "PST");
 				break;
 			case "est":
-				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
+				timeOutputLines[0] = getOutputLine(date, "EST");
 				break;
 			case "pst":
-				timeOutputLines[0] = String.format("GMT Date/Time: %s", time.toString());
+				timeOutputLines[0] = getOutputLine(date, "PST");
 				break;
 			default:
 				goodRequest = false;
@@ -77,6 +77,17 @@ public class Server
 		else {
 			send(new HttpResponse().badRequest());
 		}
+	}
+
+	private String getOutputLine(Date date, String timezone) {
+		return String.format("%s Date/Time: %s", timezone, getDateStr(date, timezone));
+	}
+
+	private String getDateStr(Date date, String timezone) {
+		SimpleDateFormat outputFormat = new SimpleDateFormat("yy-MM-dd h:mm a");
+		outputFormat.setTimeZone(TimeZone.getTimeZone(timezone));
+		String outputString = outputFormat.format(date);
+		return outputString;
 	}
 
 	private void send(String outData) throws IOException {

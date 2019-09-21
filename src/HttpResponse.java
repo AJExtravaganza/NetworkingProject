@@ -36,7 +36,7 @@ public class HttpResponse {
     public String badRequest() {
         statusCode = "400";
         statusDescription = "Bad Request";
-        setContent("<h1>400 Bad Request</h1>");
+        setContent("<h1>Invalid Request</h1>");
         return get();
     }
 
