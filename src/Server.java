@@ -4,6 +4,12 @@ import java.text.*;
 import java.time.*;
 import java.util.*;
 
+class BadRequestException extends Exception {
+	BadRequestException(String errorMessage) {
+		super(errorMessage);
+	}
+}
+
 public class Server 
 { 
 	//initialize socket and input stream 
@@ -33,36 +39,40 @@ public class Server
 	}
 
 	private void respondTo(SimpleHttpRequest request) throws IOException {
-		Boolean goodRequest = true;
-		HttpResponse response = new HttpResponse();
-		TimeClient timeGrabber = new TimeClient("time.nist.gov");
-		Date date= timeGrabber.getTimeFromNistServer();
-
-		String requestedTimezone;
 		try {
-			requestedTimezone = request.uri.getQuery().split("zone=")[1].split("&")[0]; //don't judge me
- 		} catch (NullPointerException err) {
-			requestedTimezone = "all";
-		}
+			if (!request.uri.getPath().equals("/time")) {
+				throw new BadRequestException("Unsupported path");
+			}
+			HttpResponse response = new HttpResponse();
+			TimeClient timeGrabber = new TimeClient("time.nist.gov");
+			Date date = timeGrabber.getTimeFromNistServer();
 
-		String[] timeOutputLines = new String[3];
-		switch (requestedTimezone.toLowerCase()) {
-			case "all":
-				timeOutputLines[0] = getOutputLine(date, "UTC");
-				timeOutputLines[1] = getOutputLine(date, "EST");
-				timeOutputLines[2] = getOutputLine(date, "PST");
-				break;
-			case "est":
-				timeOutputLines[0] = getOutputLine(date, "EST");
-				break;
-			case "pst":
-				timeOutputLines[0] = getOutputLine(date, "PST");
-				break;
-			default:
-				goodRequest = false;
-		}
+			String requestedTimezone;
+			try {
+				requestedTimezone = request.uri.getQuery().split("zone=")[1].split("&")[0]; //don't judge me
+			} catch (NullPointerException err) {
+				requestedTimezone = "all";
+			} catch (ArrayIndexOutOfBoundsException err) {
+				throw new BadRequestException("Unsupported uri parameters");
+			}
 
-		if (goodRequest) {
+			String[] timeOutputLines = new String[3];
+			switch (requestedTimezone.toLowerCase()) {
+				case "all":
+					timeOutputLines[0] = getOutputLine(date, "UTC");
+					timeOutputLines[1] = getOutputLine(date, "EST");
+					timeOutputLines[2] = getOutputLine(date, "PST");
+					break;
+				case "est":
+					timeOutputLines[0] = getOutputLine(date, "EST");
+					break;
+				case "pst":
+					timeOutputLines[0] = getOutputLine(date, "PST");
+					break;
+				default:
+					throw new BadRequestException("Unsupported timezone (supports all, est, pst)");
+			}
+
 			StringBuilder responseBody = new StringBuilder();
 			for (String line : timeOutputLines) {
 				if (line != null) {
@@ -73,8 +83,8 @@ public class Server
 			String responseContent = String.format("<html><head><title>Current Time</title></head><body><h3>%s</h3></body></html>", responseBody);
 			response.setContent(responseContent);
 			send(response.get());
-		}
-		else {
+
+		} catch (BadRequestException err) {
 			send(new HttpResponse().badRequest());
 		}
 	}
@@ -86,8 +96,7 @@ public class Server
 	private String getDateStr(Date date, String timezone) {
 		SimpleDateFormat outputFormat = new SimpleDateFormat("yy-MM-dd h:mm a");
 		outputFormat.setTimeZone(TimeZone.getTimeZone(timezone));
-		String outputString = outputFormat.format(date);
-		return outputString;
+		return outputFormat.format(date);
 	}
 
 	private void send(String outData) throws IOException {
