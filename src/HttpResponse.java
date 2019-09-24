@@ -4,7 +4,7 @@ public class HttpResponse {
     String version = "HTTP/1.1";
     String statusCode = "200";
     String statusDescription = "OK";
-    String contentType = "text/html";
+    String contentType = "text/html; charset=utf-8";
     String content = "";
     int contentLength = 0;
 
