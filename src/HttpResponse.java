@@ -29,7 +29,20 @@ public class HttpResponse {
                 contentLength);
         String separator = "\r\n";
 
+        if (content.length() < 140) {
+            setContent(padContent(content));
+        }
+
         return headers + separator + content + '\n';
+    }
+
+    String padContent(String currentContent) {
+        StringBuilder newContent = new StringBuilder();
+        newContent.append(currentContent);
+        for (int i = 0; i < (140 - currentContent.length()); i++) {
+            newContent.append(' ');
+        }
+        return newContent.toString();
     }
 
     String badRequest() {

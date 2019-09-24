@@ -27,14 +27,16 @@ public class Server
 	}
 
 	private void process() throws IOException {
-		try {
-			respondTo(receive());
-		} catch (URISyntaxException err) {
-			send(new HttpResponse().badRequest());
-		}
+        try {
+            respondTo(receive());
+        } catch (URISyntaxException err) {
+            send(new HttpResponse().badRequest());
+        } catch (NullRequestException err) {
+            System.out.println("Error: Accept triggered with null request content. Ignoring");
+        }
 	}
 
-	private SimpleHttpRequest receive() throws IOException, URISyntaxException {
+	private SimpleHttpRequest receive() throws IOException, URISyntaxException, NullRequestException {
 		return new SimpleHttpRequest(socket.getInputStream());
 	}
 
@@ -101,7 +103,7 @@ public class Server
 
 	private void send(String outData) throws IOException {
 		DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-		System.out.println("Sending:\n" + outData);
+		System.out.println("\nSending:\n" + outData);
 		out.writeUTF(outData);
 		out.close();
 	}
